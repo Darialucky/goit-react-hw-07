@@ -1,81 +1,55 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { nanoid } from "nanoid";
-import { deleteContact } from "./contactsOps";
-import { fetchContacts } from "./contactsOps";
-import { addContacts } from "./contactsOps";
+import { createSelector, createSlice } from "@reduxjs/toolkit";
+import { addContacts, deleteContact, fetchContacts } from "./contactsOps";
+import { selectContacts, selectNameFilter } from "./selectors";
 
-const contactsInitialState = [
-  { id: 0, name: "John Doe", number: "0501112233" },
-  { id: 1, name: "Jane Smith", number: "0973322114" },
-  { id: 2, name: "Mary Johnson", number: "0445566778" },
-  { id: 3, name: "Robert Brown", number: "0679876543" },
-  { id: 4, name: "Emily Davis", number: "0931122334" },
-];
+const handlePending = (state) => {
+  state.isLoading = true;
+};
+
+const handleRejected = (state, action) => {
+  state.isLoading = false;
+  state.error = action.payload;
+};
+
 const contactsSlice = createSlice({
   name: "contacts",
-  initialState: {
-    items: [],
-    isLoading: false,
-    error: null,
-  },
-  extraReducers: (builder) =>
+  initialState: { items: [], isLoading: false, error: null },
+  extraReducers: (builder) => {
     builder
-      .addCase(fetchContacts.pending, (state) => {
-        state.isLoading = true;
+      .addCase(fetchContacts.pending, handlePending)
+      .addCase(fetchContacts.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.error = null;
+        state.items = action.payload;
       })
-      .addCase(fetchContacts.fulfilled, (state, { payload }) => {
+      .addCase(fetchContacts.rejected, handleRejected)
+      .addCase(addContacts.pending, handlePending)
+      .addCase(addContacts.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = payload;
-      })
-      .addCase(fetchContacts.rejected, (state, { payload }) => {
-        state.isLoading = false;
-        state.error = payload;
-      })
-      .addCase(addContacts.pending, (state) => {
-        state.isLoading = true;
         state.error = null;
+        state.items.push(action.payload);
       })
-      .addCase(addContacts.fulfilled, (state, { payload }) => {
+      .addCase(addContacts.rejected, handleRejected)
+      .addCase(deleteContact.pending, handlePending)
+      .addCase(deleteContact.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items.push(payload);
-      })
-      .addCase(addContacts.rejected, (state, { payload }) => {
-        state.isLoading = false;
-        state.error = payload;
-      })
-      .addCase(deleteContact.pending, (state) => {
-        state.isLoading = true;
         state.error = null;
+        const index = state.items.findIndex(
+          (contact) => contact.id === action.payload.id
+        );
+        state.items.splice(index, 1);
       })
-      .addCase(deleteContact.fulfilled, (state, { payload }) => {
-        console.log("payload", payload);
-        state.isLoading = false;
-        state.items = state.items.filter((item) => item.id !== payload);
-      })
-      .addCase(deleteContact.rejected, (state, { payload }) => {
-        state.isLoading = false;
-        state.error = payload;
-      }),
+      .addCase(deleteContact.rejected, handleRejected);
+  },
 });
 
+export const selectFilteredContacts = createSelector(
+  [selectContacts, selectNameFilter],
+  (contacts, filter) => {
+    return contacts.filter((contact) =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
+    );
+  }
+);
+
 export const contactsReducer = contactsSlice.reducer;
-//   reducers: {
-//     addContact(state, action) {
-//       const newContact = {
-//         id: nanoid(),
-//         ...action.payload,
-//       };
-//       state.items.push(newContact);
-//     },
-//     deleteContact(state, action) {
-//       state.items = state.items.filter(
-//         (contact) => contact.id !== action.payload
-//       );
-//     },
-//   },
-// });
-
-// export const { addContact, deleteContact } = contactsSlice.actions;
-
-// export default contactsSlice.reducer;
