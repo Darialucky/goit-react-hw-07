@@ -1,54 +1,33 @@
-import "./App.css";
-import { useEffect } from "react";
-import ContactForm from "./components/ContactForm/ContactForm";
 import ContactList from "./components/ContactList/ContactList";
+import { useSelector } from "react-redux";
 import SearchBox from "./components/SearchBox/SearchBox";
-import initialContacts from "./contacts.json";
-import { nanoid } from "nanoid";
-import { useState } from "react";
+import ContactForm from "./components/ContactForm/ContactForm";
+import { fetchContacts } from "./redux/contactsOps";
+import { useDispatch } from "react-redux";
+import { useEffect } from "react";
+import "./App.css";
+import Loader from "./components/Loader/loader";
+import { selectError, selectIsLoading } from "./redux/selectors";
 
-export default function App() {
-  const [contacts, setContacts] = useState(() => {
-    const saveContacts = window.localStorage.getItem("save-contacts");
-    if (saveContacts !== null) {
-      return JSON.parse(saveContacts);
-    } else {
-      return initialContacts;
-    }
-  });
-  const [filter, setFilter] = useState("");
-
-  const handleFilterChange = (e) => {
-    setFilter(e.target.value);
-  };
-
-  const filteredContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(filter.toLowerCase())
-  );
-
-  const handleAddContact = (values) => {
-    const newContact = {
-      id: nanoid(),
-      name: values.name,
-      number: values.number,
-    };
-    setContacts([...contacts, newContact]);
-  };
-
-  const deleteContact = (id) => {
-    setContacts(contacts.filter((contact) => contact.id !== id));
-  };
+function App() {
+  const dispatch = useDispatch();
+  const isLoading = useSelector(selectIsLoading);
+  const error = useSelector(selectError);
 
   useEffect(() => {
-    window.localStorage.setItem("save-contacts", JSON.stringify(contacts));
-  }, [contacts]);
+    dispatch(fetchContacts());
+  }, [dispatch]);
 
   return (
     <div className="container">
       <h1>Phonebook</h1>
-      <ContactForm onAddContact={handleAddContact} />
-      <SearchBox value={filter} onChange={handleFilterChange} />
-      <ContactList contacts={filteredContacts} onDelete={deleteContact} />
+      <ContactForm />
+      <SearchBox />
+      {isLoading && <Loader />}
+      {error && <b>❌ Something went wrong</b>}
+      <ContactList />
     </div>
   );
 }
+
+export default App;
