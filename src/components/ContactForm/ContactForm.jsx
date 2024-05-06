@@ -16,22 +16,22 @@ export default function ContactForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className={css.formContainer}>
+    <form onSubmit={handleSubmit} className={css.form_container}>
       <input
         type="text"
         name="name"
         placeholder="Name"
-        className={css.formField}
+        className={css.form_field}
         required
       />
       <input
         type="number"
         name="number"
         placeholder="Number"
-        className={css.formField}
+        className={css.form_field}
         required
       />
-      <button type="submit" className={css.formBtn}>
+      <button type="submit" className={css.form_btn}>
         Add
       </button>
     </form>
